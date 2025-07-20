@@ -11,15 +11,17 @@ public class main {
         Question question1=user1.createQuestion(engine, "how to write hellow world in java programming", "I am new to java, exlain me how to write hellow wordld in java", null);
         Answer ans1=user1.creatAnswer(engine, "Just in main function put this line System.out.println(\"Hellow Word\")", question1, null);
         Comment qc1=new Comment("Oh just simple thanks", user1, ans1);
+        Tag tag1=new Tag("Java");
+        question1.addTag(tag1);
         Guest g=new Guest();
         for(Question k:g.getAllQuestions(engine)){
-            k.toSting();
+            System.out.println(k.toString());
         }
     }
 }
 
 enum Badge{
-    BRONZE, SILVER, GOLD , DIAMOND, CROWN, ACE
+    BRONZE, SILVER, GOLD , DIAMOND, CROWN, ACE, CONQUEROR
 }
 
 enum QuestionStatus{
@@ -57,7 +59,7 @@ class DataBase{
     public List<Answer> getAnswers(){
         return this.answers;
     }
-    public List<Comment> gComments(){
+    public List<Comment> getComments(){
         return this.comments;
     }
 
@@ -121,12 +123,12 @@ class Member{
         return comObj;
     }
 
-    public Enum getBatch(){
+    public Enum getBadge(){
         return this.badge;
     }
 
-    public Enum setBatch(){
-        return this.badge=badge;
+    public void setBadge(Enum badge){
+        this.badge=badge;
     }
 
     public Enum getAccountStatus(){
@@ -137,14 +139,41 @@ class Member{
     }
 }
 
-class Question{
+abstract class Vote{
+    protected int upvotes;
+    protected int downvotes;
+    Vote(){
+        this.upvotes=0;
+        this.downvotes=0;
+    }
+
+    public int getUpvotes(){
+        return this.upvotes;
+    }
+
+    public int getDownVotes(){
+        return this.downvotes;
+    }
+
+    public void upvote(){
+        this.upvotes+=1;
+    }
+
+    public void downvote(){
+        this.downvotes+=1;
+    }
+
+    public String getVotes(){
+        return "Upvotes: "+this.upvotes+" Downvotes :"+this.downvotes;
+    }
+}
+
+class Question extends Vote{
     private int Id;
     private static int Idcounter=100;
     private String title;
     private String details;
-    private int upvotes;
-    private int downvotes;
-    private Enum status;
+    private QuestionStatus status;
     private LocalDateTime datetime;
     private Member owner;
     private List<Tag> tags;
@@ -154,15 +183,17 @@ class Question{
         this.title=title;
         this.details=details;
         this.owner=member;
-        this.upvotes=0;
-        this.downvotes=0;
         this.status=QuestionStatus.OPEN;
         this.datetime=LocalDateTime.now();
         this.tags=new ArrayList<>();
 
     }
-    public void changeStatus(Enum status){
+    public void changeStatus(QuestionStatus status){
         this.status=status;
+    }
+
+    public QuestionStatus getStatus(){
+        return this.status;
     }
     public String getTitle(){
         return this.title;
@@ -179,15 +210,6 @@ class Question{
     public void editDetails(String details){
         this.details=details;
     }
-    public void upvote(){
-        this.upvotes+=1;
-    }
-    public void downvote(){
-        this.downvotes+=1;
-    }
-    public String getVotes(){
-        return "Upvotes: "+this.upvotes+" Downvotes :"+this.downvotes;
-    }
 
     public List<Tag> getTags(){
         return this.tags;
@@ -196,22 +218,30 @@ class Question{
         this.tags.add(tag);
     }
 
-    public void toSting(){
-        System.out.println("Question Id "+this.Id+" Question title "+this.title+" Question details "+this.details);
+    public Member getOwner(){
+        return this.owner;
+    }
+
+    public String toString(){
+        String data="Question Id "+this.Id+" Question title "+this.title+" Question details "+this.details;
+        data+=" \n Tags";
         for(Tag tag: this.tags){
-            System.out.println(tag.toString());
+           data+="\n";
+           data+=tag.toString();
         }
+        return data;
+
     }
 
 }
 
-class Answer{
+
+
+class Answer extends Vote{
     private int Id;
-    private static int Idcounter;
+    private static int Idcounter=100;
     private String answer;
     private LocalDateTime dateTime;
-    private int upvotes;
-    private int downvotes;
     private Member user;
     private Question question;
     private List<Tag> tags;
@@ -219,8 +249,6 @@ class Answer{
         this.Id=Idcounter++;
         this.answer=answer;
         this.dateTime=LocalDateTime.now();
-        this.upvotes=0;
-        this.downvotes=0;
         this.user=user;
         this.question=question;
         this.tags=new ArrayList<>();
@@ -237,17 +265,8 @@ class Answer{
     public Question getQuestion(){
         return this.question;
     }
-    public void upvote(){
-        this.upvotes+=1;
-    }
-    public void downvote(){
-        this.downvotes+=1;
-    }
     public void editAnswer(String answer){
         this.answer=answer;
-    }
-    public String getVotes(){
-        return "Upvotes: "+this.upvotes+" Downvotes :"+this.downvotes;
     }
 
     public List<Tag> getTags(){
@@ -257,23 +276,25 @@ class Answer{
         this.tags.add(tag);
     }
 
-    public void toSting(){
-        System.out.println("Answer Id "+this.Id+" Answer details "+this.answer+" For the question "+this.question.toString());
+    public String toString(){
+        String data="Answer Id "+this.Id+" Answer details "+this.answer+" For the question "+this.question.toString();
+        data+=" \n Tags";
         for(Tag tag: this.tags){
-            System.out.println(tag.toString());
+           data+="\n";
+           data+=tag.toString();
         }
+        return data;
+
     }
 
 }
 
-class Comment{
+class Comment extends Vote{
     private int Id;
     private static int Idcounter=100;
     private String commentDetails;
     private LocalDateTime datetime;
     private Member user;
-    private int upvotes;
-    private int downvotes;
     private Object parent;
     private List<Tag> tags;
 
@@ -284,8 +305,6 @@ class Comment{
         this.datetime=LocalDateTime.now();
         this.commentDetails=comment;
         this.user=member;
-        this.upvotes=0;
-        this.downvotes=0;
         this.parent=parent;
         this.tags=new ArrayList<>();
     }
@@ -305,24 +324,12 @@ class Comment{
         return this.user;
     }
 
-    public int getUpvotes(){
-        return this.upvotes;
-    }
-
-    public void upvote(){
-        this.upvotes+=1;
-    }
-
-    public void downvote(){
-        this.downvotes+=1;
-    }
-
-    public int getDownvotes(){
-        return this.downvotes;
-    }
-
     public Object getParent(){
         return this.parent;
+    }
+
+    public int getDownVotes(){
+        return this.downvotes;
     }
 
     public List<Tag> getTags(){
@@ -332,11 +339,14 @@ class Comment{
         this.tags.add(tag);
     }
 
-    public void toSting(){
-        System.out.println("Comment Id "+this.Id+" Comment details "+this.commentDetails+" parent details"+this.parent.toString());
+    public String toString(){
+        String data="Comment Id "+this.Id+" Comment details "+this.commentDetails+" parent details"+this.parent.toString();
+        data+=" \n Tags";
         for(Tag tag: this.tags){
-            System.out.println(tag.toString());
+           data+="\n";
+           data+=tag.toString();
         }
+        return data;
     }
 }
 
@@ -375,11 +385,12 @@ class Tag{
     private String details;
 
     Tag(String details){
+        this.Id=Idcounter++;
         this.details=details;
     }
 
-    public void toSting(){
-        System.err.println("Tag Id: "+this.Id+" Tag details "+this.details);
+    public String toString(){
+        return "Tag Id: "+this.Id+" Tag details "+this.details;
     }
 } 
 class TagManager{
@@ -454,7 +465,17 @@ class Search extends DataBase{
             }
         }
         return answer;
-  }
+   }
+
+   public List<Question> searchQuestionsOnTag(Tag tag){
+      List<Question> answer=new ArrayList<>();
+      for(Question question: questions){
+          if(question.getTags().contains(tag)){
+            answer.add(question);
+          }
+      }
+      return answer; 
+   }
 
 }
 
@@ -470,4 +491,51 @@ class Guest{
     public List<Question> getQuestions(Search search, String phrase){
         return search.searchQuestions(phrase);
     }
+}
+
+class ContributionEvaluator{
+    ContributionEvaluator(){}
+    public void evaluateMemberPerformanceAndAssignBadge(List<Member> members,DataBase dataBase){
+
+        // iterate members
+        for(Member member: members){
+            int questionContributionCount=0;
+            for(Question question: dataBase.getQuestions()){
+                if(question.getOwner()==member && (question.getStatus()!=QuestionStatus.DELETED || question.getStatus()!=QuestionStatus.CLOSED) && question.getDownVotes()<3){
+                    questionContributionCount+=1;
+                }
+            }
+            int answerContributionCount=0;
+            for(Answer answer: dataBase.getAnswers()){
+                if(answer.getUser()==member && answer.getDownVotes()<3){
+                    answerContributionCount+=1;
+                }
+            }
+            int commentContributionCount=0;
+            for(Comment comment: dataBase.getComments()){
+                if(comment.getUser()==member && comment.getDownVotes()<3){
+                    commentContributionCount+=1;
+                }
+            }
+            if(questionContributionCount>2 && answerContributionCount>4 && commentContributionCount>1){
+                member.setBadge(Badge.SILVER);
+            }
+            else if(questionContributionCount>4 && answerContributionCount>10 && commentContributionCount>5){
+                member.setBadge(Badge.GOLD);
+            }
+            else if(questionContributionCount>10 && answerContributionCount>15 && commentContributionCount>10){
+                member.setBadge(Badge.DIAMOND);
+            }
+            else if(questionContributionCount>25 && answerContributionCount>40 && commentContributionCount>15){
+                member.setBadge(Badge.CROWN);
+            }
+            else if(questionContributionCount>50 && answerContributionCount>100 && commentContributionCount>40){
+                member.setBadge(Badge.SILVER);
+            }
+            else if(questionContributionCount>100 && answerContributionCount>200 && commentContributionCount>10){
+                member.setBadge(Badge.SILVER);
+            }
+        }
+    }
+
 }
