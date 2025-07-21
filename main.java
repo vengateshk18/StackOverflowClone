@@ -6,10 +6,12 @@ import java.time.LocalDateTime;
 
 public class main {
     public static void main(String args[]){
-        Search engine=new Search();
+        
+        DataBase base=new DataBase();
+        Search engine=new Search(base);
         Member user1=new Member("venky");
-        Question question1=user1.createQuestion(engine, "how to write hellow world in java programming", "I am new to java, exlain me how to write hellow wordld in java", null);
-        Answer ans1=user1.creatAnswer(engine, "Just in main function put this line System.out.println(\"Hellow Word\")", question1, null);
+        Question question1=user1.createQuestion(base, "how to write hellow world in java programming", "I am new to java, exlain me how to write hellow wordld in java", null);
+        Answer ans1=user1.creatAnswer(base, "Just in main function put this line System.out.println(\"Hellow Word\")", question1, null);
         Comment qc1=new Comment("Oh just simple thanks", user1, ans1);
         Tag tag1=new Tag("Java");
         question1.addTag(tag1);
@@ -17,6 +19,8 @@ public class main {
         for(Question k:g.getAllQuestions(engine)){
             System.out.println(k.toString());
         }
+
+        System.out.println(engine.searchMostUpvotesQuestion().toString());
     }
 }
 
@@ -32,12 +36,13 @@ enum AccountStatus{
     ACTIVE, ARCHIVED, BLOCKED, BANNED, UNKNOWN
 }
 
-class DataBase{
+class DataBase extends TagManager{
     public List<Question> questions;
     public List<Answer> answers;
     public List<Comment> comments;
     public List<Member> members;
     DataBase(){
+        super();
         this.questions=new ArrayList<>();
         this.answers=new ArrayList<>();
         this.comments=new ArrayList<>();
@@ -94,8 +99,14 @@ class Member{
         Question quObj=new Question(title,details,this);
         if(tags!=null){
             for(Tag tag:tags){
-            quObj.addTag(tag);
-        }
+                if(!dataBase.isAvailable(tag)){
+                    dataBase.initializeFrequency(tag);
+                }
+                else{
+                    dataBase.increaseFrequency(tag);
+                }
+                quObj.addTag(tag);
+            }
         }
         dataBase.addQuestion(quObj);
         return quObj;
@@ -106,6 +117,12 @@ class Member{
         if(tags!=null){
             for(Tag tag:tags){
             ansObj.addTag(tag);
+            if(!dataBase.isAvailable(tag)){
+                    dataBase.initializeFrequency(tag);
+            }
+            else{
+                dataBase.increaseFrequency(tag);
+            }
         }
         }
         dataBase.addAswer(ansObj);
@@ -117,6 +134,12 @@ class Member{
         if(tags!=null){
             for(Tag tag:tags){
             comObj.addTag(tag);
+             if(!dataBase.isAvailable(tag)){
+                    dataBase.initializeFrequency(tag);
+                }
+                else{
+                    dataBase.increaseFrequency(tag);
+                }
             }
         }
         dataBase.addComment(comObj);
@@ -403,6 +426,14 @@ class TagManager{
         return this.frequency.get(tag);
     }
 
+    public boolean isAvailable(Tag tag){
+        return this.frequency.containsKey(tag);
+    }
+
+    public HashMap<Tag,Integer> getAllFrequencyData(){
+        return this.frequency;
+    }
+
     public void initializeFrequency(Tag tag){
         this.frequency.put(tag,0);
     }
@@ -419,14 +450,15 @@ class TagManager{
     }
 }
 
-class Search extends DataBase{
-    Search(){
-        super();
+class Search{
+    private DataBase dataBase;
+    Search(DataBase dataBase){
+        this.dataBase=dataBase;
     }
   public List<Question> searchQuestions(String phrase){
     String searchStrings[]=phrase.split(" ");
     List<Question> answer=new ArrayList<>();
-    for(Question question: questions){
+    for(Question question:this.dataBase.getQuestions()){
         String completeDetails=question.getTitle()+question.getDetails();
         int wordMatchingCount=0;
         for(String word: searchStrings){
@@ -441,17 +473,17 @@ class Search extends DataBase{
     return answer;
   }
   public List<Question> getAllQuestions(){
-    return questions;
+    return this.dataBase.getQuestions();
   }
   public List<Question> deepSearch(String phrase){
         String searchStrings[]=phrase.split(" ");
         List<Question> answer=new ArrayList<>();
-        for(Question question: questions){
+        for(Question question:this.dataBase.getQuestions()){
             String completeDetails=question.getTitle()+question.getDetails();
-            for(Answer ans:answers){
+            for(Answer ans:this.dataBase.getAnswers()){
                 completeDetails+=ans.getAnswer();
             }
-            for(Comment com:comments){
+            for(Comment com:this.dataBase.getComments()){
                 completeDetails+=com.getDetails();
             }
             int wordMatchingCount=0;
@@ -469,7 +501,7 @@ class Search extends DataBase{
 
    public List<Question> searchQuestionsOnTag(Tag tag){
       List<Question> answer=new ArrayList<>();
-      for(Question question: questions){
+      for(Question question: this.dataBase.getQuestions()){
           if(question.getTags().contains(tag)){
             answer.add(question);
           }
@@ -477,6 +509,42 @@ class Search extends DataBase{
       return answer; 
    }
 
+    public Tag searchtMostFrequentTag(){
+      Tag ans=null;
+      int max=Integer.MIN_VALUE;
+      HashMap<Tag,Integer> currentTagData=this.dataBase.getAllFrequencyData();
+    for (Tag tag : currentTagData.keySet()) {
+        if(currentTagData.get(tag)>max){
+            max=currentTagData.get(tag);
+            ans=tag;
+        }
+    }
+    return ans;
+
+    }
+
+    public Question searchMostUpvotesQuestion(){
+        Question answerQuestion=null;
+        int max=Integer.MIN_VALUE;
+        for(Question question:this.dataBase.getQuestions()){
+            if(question.getUpvotes()>max){
+                max=question.getUpvotes();
+                answerQuestion=question;
+            }
+        }
+        return answerQuestion;
+    }
+
+    public List<Question> searchQuestionBasedOnMember(Member member){
+        List<Question> answerQuestion=new ArrayList<>();
+
+        for(Question question:this.dataBase.getQuestions()){
+            if(question.getOwner()==member){
+                answerQuestion.add(question);
+            }
+        }
+        return answerQuestion;
+    }
 }
 
 class Guest{
