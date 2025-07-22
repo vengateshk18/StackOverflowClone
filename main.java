@@ -13,14 +13,14 @@ public class main {
         Question question1=user1.createQuestion(base, "how to write hellow world in java programming", "I am new to java, exlain me how to write hellow wordld in java", null);
         Answer ans1=user1.creatAnswer(base, "Just in main function put this line System.out.println(\"Hellow Word\")", question1, null);
         Comment qc1=new Comment("Oh just simple thanks", user1, ans1);
-        Tag tag1=new Tag("Java");
-        question1.addTag(tag1);
+        user1.addTagTOQuestion(base, question1, new Tag("Java"));
+        user1.addTagTOAnswer(base, ans1, new Tag("Python"));
         Guest g=new Guest();
         for(Question k:g.getAllQuestions(engine)){
             System.out.println(k.toString());
         }
-
         System.out.println(engine.searchMostUpvotesQuestion().toString());
+        System.out.println(engine.searchtMostFrequentTag().toString());
     }
 }
 
@@ -99,6 +99,7 @@ class Member{
         Question quObj=new Question(title,details,this);
         if(tags!=null){
             for(Tag tag:tags){
+                System.out.println(dataBase.getAllFrequencyData().toString());
                 if(!dataBase.isAvailable(tag)){
                     dataBase.initializeFrequency(tag);
                 }
@@ -146,6 +147,38 @@ class Member{
         return comObj;
     }
 
+    public void addTagTOQuestion(DataBase dataBase, Question question,Tag tag){
+        question.addTag(tag);
+        if(!dataBase.isAvailable(tag)){
+            dataBase.initializeFrequency(tag);
+        }
+        else{
+            dataBase.increaseFrequency(tag);
+        }
+
+    }
+
+    public void addTagTOAnswer(DataBase dataBase, Answer question,Tag tag){
+        question.addTag(tag);
+        if(!dataBase.isAvailable(tag)){
+            dataBase.initializeFrequency(tag);
+        }
+        else{
+            dataBase.increaseFrequency(tag);
+        }
+
+    }
+
+    public void addTagTOComment(DataBase dataBase, Comment question,Tag tag){
+        question.addTag(tag);
+        if(!dataBase.isAvailable(tag)){
+            dataBase.initializeFrequency(tag);
+        }
+        else{
+            dataBase.increaseFrequency(tag);
+        }
+
+    }
     public Enum getBadge(){
         return this.badge;
     }
@@ -238,6 +271,7 @@ class Question extends Vote{
         return this.tags;
     }
     public void addTag(Tag tag){
+        
         this.tags.add(tag);
     }
 
